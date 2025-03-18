@@ -3,8 +3,8 @@ import 'dart:ffi';
 import 'package:flutter/material.dart';
 import "package:pocketbase/pocketbase.dart";
 
-//final pb = PocketBase('http://10.0.2.2:8090');
-final pb = PocketBase('http://127.0.0.1:8090');
+final pb = PocketBase('http://10.0.2.2:8090'); // use for Android emulator
+// final pb = PocketBase('http://127.0.0.1:8090'); // use for native desktop app
 
 void main() {
   runApp(const MyApp());
