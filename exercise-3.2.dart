@@ -76,22 +76,32 @@ class _MyHomePageState extends State<MyHomePage> {
   @override
   initState() {
     super.initState();
+    
+    // login to the database
     final userData = pb.collection('users').authWithPassword('floe@butterbrot.org', 'blahblah');
+
+    // get one page of data from collection "example" where status == true
     final result = pb.collection('example').getList(
         page:    1,
         perPage: 20,
         filter:  'status = true && created >= "2022-08-01"',
         sort:    '-created',
-    ).then((value) { setState(() {
+    ).then(
+      // results have arrived, load them into items[]
+      (value) { setState(() { // don't forget to wrap in setState(), or the user interface will not update 
       for (var item in value.items) {
         items.add(item.getStringValue("id"));
       }
     }); } );
+
+    // subscribe to changes in the collection so the user interface stays in sync with the database
     pb.collection('example').subscribe("*", (e) { setState(() {
       print(e.action); // create, update, delete
       print(e.record); // the changed record
+      // get the current values of the changed record
       String value = e.record!.getStringValue("id");
       bool status = e.record!.getBoolValue("status");
+      // edit the items[] list so that it has the same content as the database
       if (e.action == "create") { if (status) { items.add(value); } }
       if (e.action == "update") { if (status) { items.add(value); } else {items.remove(value);} }
       if (e.action == "delete") { items.remove(value); }
