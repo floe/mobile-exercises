@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:math';
 
 import 'package:flutter/material.dart';
 
@@ -36,6 +37,8 @@ class _MyHomePageState extends State<MyHomePage> {
 
   // prompt for the user
   String status = 'Push the button to start!';
+  // button label
+  String label = "Start!";
   // sequence for buttons to light up
   List<int> sequence = [0,2,1,3,0,1,2,3,2,1,0];
   // sequence guessed by the player
@@ -43,13 +46,30 @@ class _MyHomePageState extends State<MyHomePage> {
   // colors for buttons numbered from 0 - 3
   List<Color> colors = [Colors.red, Colors.green, Colors.yellow, Colors.blue];
   // current number in sequence
-  int current = 0;
+  int current = -1;
+  // sequence length
+  int maxlength = 10;
+
+  @override
+  void initState() {
+    super.initState();
+    sequence.clear();
+    var rand = Random();
+    int oldnum = -1;
+    int newnum = -1;
+    for (int i = 0; i < maxlength; i++) {
+      while (newnum == oldnum) newnum = rand.nextInt(4);
+      sequence.add(newnum);
+      oldnum = newnum;
+    }
+  }
 
   void start() {
     setState(() {
       // start the replay of the color sequence
-      current = 0;
+      current = -1;
       status = "Memorize the color sequence";
+      label = "Wait...";
       // in one second from now, call next()
       Timer(const Duration(seconds: 1), next );
     });
@@ -61,6 +81,7 @@ class _MyHomePageState extends State<MyHomePage> {
       // reset the guesses and prompt text
       setState(() { 
         status = "Repeat the color sequence!";
+        label = "Restart";
         guesses.clear();
       });
       return;
@@ -72,9 +93,10 @@ class _MyHomePageState extends State<MyHomePage> {
     });
   }
 
-  // - generate a random sequence
   // - make the user interface look nicer
   // - play sounds
+
+  // - generate a random sequence ✅
   // - show a message when you guess wrong ✅
 
   void guess(id) {
@@ -95,6 +117,7 @@ class _MyHomePageState extends State<MyHomePage> {
 
   // get color for the currently active button, grey for all others
   Color getColor(int id) {
+    if (current == -1) return Colors.grey;
     Color buttonColor = colors[id];
     if (sequence[current] == id) return buttonColor;
     return Colors.grey;
@@ -120,7 +143,7 @@ class _MyHomePageState extends State<MyHomePage> {
               MaterialButton(onPressed: (){ guess(3); }, height: 200, minWidth: 180, color: getColor(3)),
             ],),
             Text(status),
-            MaterialButton( onPressed: start, color: Colors.blueGrey, child: Text("Start!"))
+            MaterialButton( onPressed: start, color: Colors.blueGrey, child: Text(label))
           ],
         ),
       ),
