@@ -1,7 +1,7 @@
 import 'dart:async';
 import 'dart:math';
-
 import 'package:flutter/material.dart';
+import 'package:audioplayers/audioplayers.dart';
 
 void main() {
   runApp(const MyApp());
@@ -50,6 +50,9 @@ class _MyHomePageState extends State<MyHomePage> {
   // sequence length
   int maxlength = 10;
 
+  // audioplayer
+  final player = AudioPlayer();
+
   @override
   void initState() {
     super.initState();
@@ -58,7 +61,9 @@ class _MyHomePageState extends State<MyHomePage> {
     int oldnum = -1;
     int newnum = -1;
     for (int i = 0; i < maxlength; i++) {
-      while (newnum == oldnum) newnum = rand.nextInt(4);
+      while (newnum == oldnum) {
+        newnum = rand.nextInt(4);
+      }
       sequence.add(newnum);
       oldnum = newnum;
     }
@@ -82,6 +87,7 @@ class _MyHomePageState extends State<MyHomePage> {
       setState(() { 
         status = "Repeat the color sequence!";
         label = "Restart";
+        current = -1;
         guesses.clear();
       });
       return;
@@ -93,13 +99,13 @@ class _MyHomePageState extends State<MyHomePage> {
     });
   }
 
-  // - make the user interface look nicer
-  // - play sounds
-
+  // - play sounds ✅
+  // - make the user interface look nicer ✅
   // - generate a random sequence ✅
   // - show a message when you guess wrong ✅
 
   void guess(id) {
+    if (current != -1) return;
     setState(() {
       guesses.add(id);
       int maxGuess = 0;
@@ -110,8 +116,14 @@ class _MyHomePageState extends State<MyHomePage> {
         maxGuess = i;
       }
       status = "You guessed ${maxGuess+1} steps correctly!";
-      if (maxGuess == sequence.length-1) status = "You won!";
-      if (maxGuess == -1) status = "You guessed wrong!";      
+      if (maxGuess == sequence.length-1) { 
+        status = "You won!";
+        player.play(AssetSource("sounds/fanfare.mp3"));
+      }
+      if (maxGuess == -1) {
+        status = "You guessed wrong!";
+        //player.play(AssetSource("sounds/wahwahwah.mp3"));
+      }      
     });
   }
 
@@ -134,13 +146,17 @@ class _MyHomePageState extends State<MyHomePage> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: <Widget>[
-            Row(children: [
-              MaterialButton(onPressed: (){ guess(0); }, height: 200, minWidth: 180, color: getColor(0)),
-              MaterialButton(onPressed: (){ guess(1); }, height: 200, minWidth: 180, color: getColor(1)),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Expanded( child: MaterialButton(onPressed: (){ guess(0); }, height: 200, minWidth: 180, color: getColor(0), splashColor: colors[0] )),
+                Expanded( child: MaterialButton(onPressed: (){ guess(1); }, height: 200, minWidth: 180, color: getColor(1), splashColor: colors[1] )),
             ],),
-            Row(children: [
-              MaterialButton(onPressed: (){ guess(2); }, height: 200, minWidth: 180, color: getColor(2)),
-              MaterialButton(onPressed: (){ guess(3); }, height: 200, minWidth: 180, color: getColor(3)),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Expanded( child: MaterialButton(onPressed: (){ guess(2); }, height: 200, minWidth: 180, color: getColor(2), splashColor: colors[2] )),
+                Expanded( child: MaterialButton(onPressed: (){ guess(3); }, height: 200, minWidth: 180, color: getColor(3), splashColor: colors[3] )),
             ],),
             Text(status),
             MaterialButton( onPressed: start, color: Colors.blueGrey, child: Text(label))
