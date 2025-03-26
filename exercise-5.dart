@@ -1,3 +1,13 @@
+// in pubspec.yaml:
+//
+// under "dependencies", add:
+//   audioplayers: ^6.4.0
+//
+// under "flutter", add:
+//   assets:
+//    - assets/sounds/fanfare.mp3
+//    - assets/sounds/wahwahwah.mp3
+
 import 'dart:async';
 import 'dart:math';
 import 'package:flutter/material.dart';
@@ -45,7 +55,7 @@ class _MyHomePageState extends State<MyHomePage> {
   List<int> guesses = [];
   // colors for buttons numbered from 0 - 3
   List<Color> colors = [Colors.red, Colors.green, Colors.yellow, Colors.blue];
-  // current number in sequence
+  // current number in sequence (-1 means playback is stopped)
   int current = -1;
   // sequence length
   int maxlength = 10;
@@ -61,17 +71,19 @@ class _MyHomePageState extends State<MyHomePage> {
     int oldnum = -1;
     int newnum = -1;
     for (int i = 0; i < maxlength; i++) {
+      // create new random numbers as long as we get the same one as before
       while (newnum == oldnum) {
         newnum = rand.nextInt(4);
       }
+      // if we have a new number, add it to the list
       sequence.add(newnum);
       oldnum = newnum;
     }
   }
 
+  // start the replay of the color sequence
   void start() {
     setState(() {
-      // start the replay of the color sequence
       current = -1;
       status = "Memorize the color sequence";
       label = "Wait...";
@@ -80,6 +92,7 @@ class _MyHomePageState extends State<MyHomePage> {
     });
   }
 
+  // step through the next item in the sequence
   void next() {
     // are we at the end of the sequence?
     if (current >= sequence.length-1) {
@@ -92,46 +105,62 @@ class _MyHomePageState extends State<MyHomePage> {
       });
       return;
     }
-    // not at the end yet, continue counting
+    // not at the end yet, continue counting and call next() again in 1s
     setState(() {
       current++;
       Timer(const Duration(seconds: 1), next );
     });
   }
 
-  // - play sounds ✅
-  // - make the user interface look nicer ✅
-  // - generate a random sequence ✅
-  // - show a message when you guess wrong ✅
+  // keyboard input and text highlighting
 
+  // log a guess made through tapping one of the buttons
   void guess(id) {
+
+    // if the "preview" is running, don't log any guesses
     if (current != -1) return;
+
+    // wrap everything in setState because we need a redraw after
     setState(() {
+
+      // add button id to list of guesses
       guesses.add(id);
+
+      // loop through guesses and compare with original sequence
       int maxGuess = 0;
       for (int i = 0; i < guesses.length && i < sequence.length; i++) {
         int hint = sequence[i];
         int myguess = guesses[i];
+        // stop the loop if the guess was wrong
         if (hint != myguess) { maxGuess = -1; break; }
+        // all guesses up to the current position (i) are correct
         maxGuess = i;
       }
+
       status = "You guessed ${maxGuess+1} steps correctly!";
+      
+      // are all guesses up to the end of the sequence correct?
       if (maxGuess == sequence.length-1) { 
         status = "You won!";
         player.play(AssetSource("sounds/fanfare.mp3"));
       }
+      
+      // or did we stop because of a wrong guess?
       if (maxGuess == -1) {
         status = "You guessed wrong!";
-        //player.play(AssetSource("sounds/wahwahwah.mp3"));
+        player.play(AssetSource("sounds/wahwahwah.mp3"));
       }      
     });
   }
 
   // get color for the currently active button, grey for all others
   Color getColor(int id) {
+    // make all buttons grey during the guessing phase
     if (current == -1) return Colors.grey;
     Color buttonColor = colors[id];
+    // if the current sequence entry matches the button id, give it a colour
     if (sequence[current] == id) return buttonColor;
+    // keep it grey otherwise
     return Colors.grey;
   }
 
@@ -149,6 +178,7 @@ class _MyHomePageState extends State<MyHomePage> {
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
+                // Buttons are wrapped in Expanded so they fill the screen width
                 Expanded( child: MaterialButton(onPressed: (){ guess(0); }, height: 200, minWidth: 180, color: getColor(0), splashColor: colors[0] )),
                 Expanded( child: MaterialButton(onPressed: (){ guess(1); }, height: 200, minWidth: 180, color: getColor(1), splashColor: colors[1] )),
             ],),
