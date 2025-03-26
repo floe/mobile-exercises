@@ -34,6 +34,7 @@ class MyHomePage extends StatefulWidget {
 
 class _MyHomePageState extends State<MyHomePage> {
 
+  // prompt for the user
   String status = 'Push the button to start!';
   // sequence for buttons to light up
   List<int> sequence = [0,2,1,3,0,1,2,3,2,1,0];
@@ -46,28 +47,56 @@ class _MyHomePageState extends State<MyHomePage> {
 
   void start() {
     setState(() {
+      // start the replay of the color sequence
       current = 0;
       status = "Memorize the color sequence";
+      // in one second from now, call next()
       Timer(const Duration(seconds: 1), next );
     });
-    print(guesses);
   }
 
   void next() {
+    // are we at the end of the sequence?
     if (current >= sequence.length-1) {
-      setState(() { status = "Repeat the color sequence!"; });
+      // reset the guesses and prompt text
+      setState(() { 
+        status = "Repeat the color sequence!";
+        guesses.clear();
+      });
       return;
     }
+    // not at the end yet, continue counting
     setState(() {
       current++;
       Timer(const Duration(seconds: 1), next );
     });
-    //print(current);
   }
 
+  // - generate a random sequence
+  // - make the user interface look nicer
+  // - play sounds
+  // - show a message when you guess wrong ✅
+
+  void guess(id) {
+    setState(() {
+      guesses.add(id);
+      int maxGuess = 0;
+      for (int i = 0; i < guesses.length && i < sequence.length; i++) {
+        int hint = sequence[i];
+        int myguess = guesses[i];
+        if (hint != myguess) { maxGuess = -1; break; }
+        maxGuess = i;
+      }
+      status = "You guessed ${maxGuess+1} steps correctly!";
+      if (maxGuess == sequence.length-1) status = "You won!";
+      if (maxGuess == -1) status = "You guessed wrong!";      
+    });
+  }
+
+  // get color for the currently active button, grey for all others
   Color getColor(int id) {
-    Color currentButton = colors[id];
-    if (sequence[current] == id) return currentButton;
+    Color buttonColor = colors[id];
+    if (sequence[current] == id) return buttonColor;
     return Colors.grey;
   }
 
@@ -83,12 +112,12 @@ class _MyHomePageState extends State<MyHomePage> {
           mainAxisAlignment: MainAxisAlignment.center,
           children: <Widget>[
             Row(children: [
-              MaterialButton(onPressed: (){ guesses.add(0); }, height: 200, minWidth: 180, color: getColor(0)),
-              MaterialButton(onPressed: (){ guesses.add(1); }, height: 200, minWidth: 180, color: getColor(1)),
+              MaterialButton(onPressed: (){ guess(0); }, height: 200, minWidth: 180, color: getColor(0)),
+              MaterialButton(onPressed: (){ guess(1); }, height: 200, minWidth: 180, color: getColor(1)),
             ],),
             Row(children: [
-              MaterialButton(onPressed: (){ guesses.add(2); }, height: 200, minWidth: 180, color: getColor(2)),
-              MaterialButton(onPressed: (){ guesses.add(3); }, height: 200, minWidth: 180, color: getColor(3)),
+              MaterialButton(onPressed: (){ guess(2); }, height: 200, minWidth: 180, color: getColor(2)),
+              MaterialButton(onPressed: (){ guess(3); }, height: 200, minWidth: 180, color: getColor(3)),
             ],),
             Text(status),
             MaterialButton( onPressed: start, color: Colors.blueGrey, child: Text("Start!"))
