@@ -68,8 +68,11 @@ class _MyHomePageState extends State<MyHomePage> {
         for (String pos in value) {
           // debug output
           print(pos);
+          // convert JSON lat/lng to LatLng object
           LatLng? tmp = LatLng.fromJson(jsonDecode(pos));
+          // skip on conversion error
           if (tmp == null) continue;
+          // add marker to list, don't sync with shared_prefs
           addMarker(tmp, do_sync: false);
         } 
       });
@@ -90,17 +93,23 @@ class _MyHomePageState extends State<MyHomePage> {
 
   void addMarker(LatLng pos, { bool do_sync = true }) {
     setState(() {
+      // create a random marker identifier
       int tmp_num = rng.nextInt(1000000);
       MarkerId tmp_id = MarkerId("$tmp_num");
+      // store a new marker with the identifier into our map
       _markers[tmp_id] = Marker(
         markerId: tmp_id,
         position: pos,
         onTap: () => removeMarker(tmp_id)
       );
+      // check if we need to sync list of markers with shared_prefs
+      if (!do_sync) return;
+      // store every marker as JSON into a string list
       List<String> result = [];
       for (Marker marker in _markers.values) {
         result.add(marker.position.toJson().toString());
       }
+      // put list into preferences
       asyncPrefs.setStringList("markers",result);
     });
   }
@@ -116,7 +125,12 @@ class _MyHomePageState extends State<MyHomePage> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: <Widget>[
-            Flexible( child: GoogleMap(initialCameraPosition: _kGooglePlex, markers: Set<Marker>.of(_markers.values), onLongPress: addMarker)),
+            // wrap map widget in flexible so it doesn't expand too much
+            Flexible( child: GoogleMap(
+              initialCameraPosition: _kGooglePlex,      // starting position of map
+              markers: Set<Marker>.of(_markers.values), // convert marker map to set
+              onLongPress: addMarker                    // what to do on long press
+            )),
             const Text(
               'You have pushed the button this many times:',
             ),
@@ -131,7 +145,7 @@ class _MyHomePageState extends State<MyHomePage> {
         onPressed: _incrementCounter,
         tooltip: 'Increment',
         child: const Icon(Icons.add),
-      ), // This trailing comma makes auto-formatting nicer for build methods.
+      ),
     );
   }
 }
