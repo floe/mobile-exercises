@@ -1,5 +1,7 @@
 // in android/app/src/main/AndroidManifest.xml, add <meta-data android:name="com.google.android.geo.API_KEY" android:value="YOUR KEY HERE"/> in <application>
 
+import 'dart:math';
+
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 
@@ -43,10 +45,19 @@ class _MyHomePageState extends State<MyHomePage> {
   );
 
   int _counter = 0;
+  Set<Marker> _markers = <Marker>{};
+  Random rng = Random();
 
   void _incrementCounter() {
     setState(() {
       _counter++;
+    });
+  }
+
+  void addMarker(LatLng pos) {
+    setState(() {
+      int tmp_id = rng.nextInt(1000000);
+      _markers.add(Marker(markerId: MarkerId("$tmp_id"),  position: pos));
     });
   }
 
@@ -61,7 +72,7 @@ class _MyHomePageState extends State<MyHomePage> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: <Widget>[
-            Flexible( child: GoogleMap(initialCameraPosition: _kGooglePlex)),
+            Flexible( child: GoogleMap(initialCameraPosition: _kGooglePlex, markers: _markers, onLongPress: addMarker)),
             const Text(
               'You have pushed the button this many times:',
             ),
