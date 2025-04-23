@@ -45,7 +45,7 @@ class _MyHomePageState extends State<MyHomePage> {
   );
 
   int _counter = 0;
-  Set<Marker> _markers = <Marker>{};
+  Map<MarkerId, Marker> _markers = <MarkerId, Marker>{};
   Random rng = Random();
 
   void _incrementCounter() {
@@ -54,10 +54,21 @@ class _MyHomePageState extends State<MyHomePage> {
     });
   }
 
+  void removeMarker(MarkerId id) {
+    setState(() {
+      _markers.remove(id);
+    });
+  }
+
   void addMarker(LatLng pos) {
     setState(() {
-      int tmp_id = rng.nextInt(1000000);
-      _markers.add(Marker(markerId: MarkerId("$tmp_id"),  position: pos));
+      int tmp_num = rng.nextInt(1000000);
+      MarkerId tmp_id = MarkerId("$tmp_num");
+      _markers[tmp_id] = Marker(
+        markerId: tmp_id,
+        position: pos,
+        onTap: () => removeMarker(tmp_id)
+      );
     });
   }
 
@@ -72,7 +83,7 @@ class _MyHomePageState extends State<MyHomePage> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: <Widget>[
-            Flexible( child: GoogleMap(initialCameraPosition: _kGooglePlex, markers: _markers, onLongPress: addMarker)),
+            Flexible( child: GoogleMap(initialCameraPosition: _kGooglePlex, markers: Set<Marker>.of(_markers.values), onLongPress: addMarker)),
             const Text(
               'You have pushed the button this many times:',
             ),
