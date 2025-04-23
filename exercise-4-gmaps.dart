@@ -1,9 +1,15 @@
 // in android/app/src/main/AndroidManifest.xml, add <meta-data android:name="com.google.android.geo.API_KEY" android:value="YOUR KEY HERE"/> in <application>
 
+// dependencies:
+//   google_maps_flutter: ^2.12.0
+//   shared_preferences: ^2.5.0
+
+import 'dart:convert';
 import 'dart:math';
 
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 void main() {
   runApp(const MyApp());
@@ -37,16 +43,38 @@ class MyHomePage extends StatefulWidget {
 
 class _MyHomePageState extends State<MyHomePage> {
 
-  //final GoogleMapController _controller = GoogleMapController.init(id, initialCameraPosition, googleMapState)
-
+  // starting point for map: GooglePlex in San Francisco
   static const CameraPosition _kGooglePlex = CameraPosition(
     target: LatLng(37.42796133580664, -122.085749655962),
     zoom: 14.4746,
   );
 
+  // object for saving preferences for next app start
+  final SharedPreferencesAsync asyncPrefs = SharedPreferencesAsync();
+
   int _counter = 0;
   Map<MarkerId, Marker> _markers = <MarkerId, Marker>{};
   Random rng = Random();
+
+  @override
+  void initState() {
+    super.initState();
+    // get the list of saved markers
+    asyncPrefs.getStringList("markers").then((value) {
+      // don't do anything if there are no saved markers
+      if (value == null) return;
+      // put list of markers into our list variable and trigger a redraw by using setState()
+      setState(() {
+        for (String pos in value) {
+          // debug output
+          print(pos);
+          LatLng? tmp = LatLng.fromJson(jsonDecode(pos));
+          if (tmp == null) continue;
+          addMarker(tmp, do_sync: false);
+        } 
+      });
+    });
+  }
 
   void _incrementCounter() {
     setState(() {
@@ -60,7 +88,7 @@ class _MyHomePageState extends State<MyHomePage> {
     });
   }
 
-  void addMarker(LatLng pos) {
+  void addMarker(LatLng pos, { bool do_sync = true }) {
     setState(() {
       int tmp_num = rng.nextInt(1000000);
       MarkerId tmp_id = MarkerId("$tmp_num");
@@ -69,6 +97,11 @@ class _MyHomePageState extends State<MyHomePage> {
         position: pos,
         onTap: () => removeMarker(tmp_id)
       );
+      List<String> result = [];
+      for (Marker marker in _markers.values) {
+        result.add(marker.position.toJson().toString());
+      }
+      asyncPrefs.setStringList("markers",result);
     });
   }
 
